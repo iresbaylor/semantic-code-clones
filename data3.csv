@@ -1,0 +1,1 @@
+1,1,ts-admin-basic-info-service,getAllContacts,,,List:Contact,GET,ts-contacts-service,List:Contact,,2,1,ts-admin-basic-info-service,deleteContact,String,,void,DELETE,ts-contacts-service,void,,3,1,ts-admin-basic-info-service,modifyContact,Contact,,Contact,PUT,ts-contacts-service,Contact,,

@@ -1,0 +1,915 @@
+%Introduction:
+%-	Strip out the paragraph about history
+%-	Include in introduction: benefits, hypothesis, self-contained, big O, improve
+%Citation: 25, no presentation,
+%ICFG to CFG
+%Unknown in the paper citation,
+%Use case
+%Talk more about the actual results and what does it mean, for instance with Exam, why do we have it here and what does it mean.
+%Improve code snippet, two times repository
+
+\section{Introduction}
+
+% EA ubiquitous, addressing all sorts of issues
+Enterprise applications are ubiquitous and essential for the modern world since they address issues far and wide; such as corporate payroll, medical records, mail and package records or tracking, analytical tools such as cost or agricultural, calculating credit scores and many more \citep{patterns}. These comprehensive problems require complex solutions using enterprise frameworks \citep{javaEE, integration_survey, dcom}, which in turn require complex code constructs such as web services or service-oriented architectures \citep{integration_survey}. Throughout the years, technologies and systems develop constantly, which in turn, develops and increases the complexity, dependency requirements, and legacy code backlog for these technologies and systems. These changes drastically increase maintenance costs \citep{complexity}. Yearly, corporations pay from 20\% to 25\% of their total fees and costs as just maintenance costs \citep{danger, tco}. For instance, Oracle earned 2.7 times the revenue of their licensing costs through maintenance and support revenue streams, as divulged in their annual financial reporting for the year 2014 \citep{danger}. Therefore, unnecessary complexity of a software system drives up to a quarter of the costs for development, making complexity one of the most important topics to pay attention to for companies desiring to lower costs and raise development efficiency.
+
+Complexity can be reduced by detecting and avoiding code clones, which constitutes from 10\% to 23\% of large software projects \citep{taxonomy, evaluation}. This bulk of duplicated, redundant code has many causes; one potential cause being when poor code practices cause companies to throw more developers onto projects to manage them, in turn, causing confusion and miscommunication and multiplying the code clones and complexity through both new and preexisting coding malpractices. Adding developers to teams to deal with systems that are already riddled with damaging code clones without removing the damaging code clones themselves can only end up adding complexity and legacy code, in turn increasing the maintenance and support costs the company now has to pay \citep{complexity}. Developers are spending hundreds of hours of precious, well-paid time just to keep the system afloat.
+
+As shown, when the complexity of a system increases, proportionally too does the cost of supporting that very same system \citep{complexity}. Developers on legacy-rich systems may have to scour thousands or hundreds of thousands of lines of code to find bugs, sometimes the very same bug appearing in dozens of locations in the codebase due to code cloning \citep{cc_manage}. Rereading and learning legacy code is extremely time consuming, and with developers being a commodity for these massive, multi-market, legacy code filled, software corporations, training professionals on old code in order just to be able to fix and maintain the system is expensive and reduces hours that could be invested in new solutions and products. However, if the codebase was less saturated with code duplication, developers would potentially only need to change code in a single or few areas to perform even the very same bug fixes that would take numerous refactorings on a system full of code clone caused coupling.
+
+Code bases can be reduced and cleaned for these purposes with better practices enforced with the help of code clone detection \citep{cc_manage}. Specifically, semantic code clones, as it is possible that developers co-developed the same behaviors synchronously rather than merely copy-pasted each other's work. This tangled with the fact that massive enterprise applications often have many methods that essentially do the same work (such as: fetch data, tweak, post to repository) but have drastically different impacts and responsibilities depending on context leads us to be convinced that semantic code clones are of far more interest and impact to an enterprise application than any other type. Therefore, since code clones cause complexity and raise costs for enterprise applications; we pose that semantic code clone detection can provide meaningful results to the fields of development, quality assurance, and maintenance with respect to the software engineering of large enterprise applications.
+
+% Semantic code clones are those which have the same behavior but different structure or method of approach and are hardest to find \citep{cc_manage}.
+We propose a method in which we represent an enterprise system as a set of Control-Flow Graphs (CFG), where nodes are represented by method statements and edges by calls between methods. Each CFG is associated with its semantic meaning in the system. For instance: what responsibilities the method has (database persistence, communication with the user, etc), data attributed to the method (the input and output of the method), and the enterprise-specific implications of the method (security, entry-point, etc). These enhanced CFGs are compared one with another by a global similarity function. Our similarity function runs in $O(n)$ and comparing each CFG pair results in $O(n^2)$ combinations. This method keeps both the time complexity and number of CFGs $n$ low. According to the results from our similarity function, we can categorize the code clones. We conducted a case study on a production enterprise application and found 5\% of code clones in all categories.
+
+This paper will highlight our solution to the topic of semantic code clone detection in enterprise applications to help enterprise software providers reduce maintenance costs and analyze several desired metrics. In Section 2, this paper will outline the state of the art and the other approaches to code clone detection focusing on the methodologies of general code clone detection and then narrowing to the focus of semantic code clones. Then, Section 3 will outline our proposed method of detection followed by Section 4 - a case study on an enterprise application. Lastly, we will conclude by summarizing the results from our experiment and highlighting important notes and concepts that can be gleaned through our research.
+
+% Semantic code clones are those which have the same behavior but different structure or method of approach and are hardest to find \citep{cc_manage}.
+%We propose a method in which we represent an enterprise system as a set of control flow graphs (CFG), where nodes are represented by method statements and edges by calls between methods. Each CFG is associated with its semantic meaning in the system. For instance: what responsibilities the method has (database persistence, communication with user, etc), data attributed to the method (the input and output of the method), and the enterprise-specific implications of the method (security, entry-point, etc). These enhanced CFGs are compared one with another by a global similarity function. Out similarity function runs in $O(n)$ and comparing each CFG pair results in $O(n^2)$ combinations. This method keeps both the time complexity and number of CFGs $n$ low. According to the results from our similarity function we can categorize the code clones. We conducted a blind study on a production enterprise application and found 5 \% of code clones in all categories. This paper will highlight our solution to the topic of semantic code clone detection in enterprise applications to help enterprise software providers reduce maintenance costs and analyze several desired metrics. In Section 2, this paper will outline the state of the art and the other approaches to code clone detection focusing on the methodologies of general code clone detection and then narrowing to the focus of semantic code clones. Then, Section 3 will outline our proposed method of detection followed by Section 4 - a case study on an enterprise application. Lastly, we will conclude by summarizing the results from our experiment and highlighting important notes and concepts that can be gleaned through our research.
+% old --------------------
+
+% Since software as a consumer service was born, the needs and expectations of the field have grown exponentially year after year. enterprise application architectures arose as a solution to the blossoming and maturing needs of consumer software systems. Such enterprise architectures include frameworks like Java enterprise Edition (JEE) \citep{javaEE, integration_survey}, Microsoft's .NET - which utilizes Microsoft's distributed component object model (DCOM, which is proprietary to .NET and Windows operating systems)\citep{dcom} - and other solutions such as web services or service-oriented architectures \citep{integration_survey}.
+
+% The web service approach has the benefit of being able to couple together framework-common objects with standard formats that enterprise systems use for data aggregation and communication: such as the common object request broker architecture (CORBA) \citep{integration_approach}, DCOM, and Message Oriented Middleware (MOM) \citep{integration_survey}. Because of this, web oriented services are able to safely bypass firewalls and corporate network policies by using standard hypertext transfer protocols (HTTP)\citep{integration_survey}. Currently, most enterprise applications utilize a mixture of the architecture styles, allowing for the use of a common method of communication via Representational State Transfer (REST) interfacing.
+
+% Enterprise systems are developed mainly for their capabilities of user concurrency and data persistence. Enterprise applications address issues far and wide, such as corporate payroll, medical records, mail and package records or tracking, analytical tools such as cost or agricultural, calculating credit scores, insurance provider utilities, supply chain, accounting and market analysis, ticket management and customer service needs, and even stock market trading systems \citep{patterns}. Clearly, enterprise applications are ubiquitous and essential to the modern world.
+
+% Though not always insurmountable in size, obviously many enterprise systems are developed in large corporations and become bloated as time goes on and legacy code is collected and not properly maintained. This bulk of legacy code and complication as more developers are thrown onto the project to manage it does nothing but create unnecessary complexity - which in turn drastically increases the maintenance and support costs the company now has to pay \citep{complexity}. Yearly, corporations pay from 20\% to 25\% of their total fees and costs as just maintenance costs \citep{danger, tco} - developers are spending hundreds of hours of precious time just to keep the system afloat. As the complexity of a system increases, proportionally too does the cost of supporting that system \citep{complexity}. Oracle, a giant in the industry, reported in their annual financial report from 2013 to 2014 to have earned 2.7 times the revenue of their licensing costs through maintenance and support revenue streams \citep{danger}.
+
+% Seeing how impacting and dangerous code complexity is for corporate costs, the main concern is how to reduce the complexity, or in the least, reduce the growth of this complexity. One such major source of complexity and bugs is that of code cloning \citep{do_cc_matter}. Code clones are blocks of code that have been copied from some source and pasted elsewhere, not necessarily always from the parent system \citep{cc_manage}. There are 4 code clone types or classes: type 1 - exact clones, type 2 - parameterized clones, type 3 - near-miss clones, and type 4 - semantic code clones \citep{cc_manage, ref9, ref10, businessclones}. Type 1 is self-descriptive, a block of code is a type 1 clone if an exact copy of the source code can be found elsewhere. Type 2 pertains to the same structure of code, however, variables or function calls may have different names. Type 3 clones have the same flow and structure but with changed names, as with type 2, and injected subroutines. The focus for this paper, type 4 clones, or semantic clones, are those which have the same behavior but different structure or method of approach \citep{cc_manage}.
+
+% Detecting code clones can benefit reducing maintenance costs of enterprise applications by allowing developers to see where code has been duplicated unnecessarily, causing bloat and confusion, or by reducing time complexity when a bug is discovered and needs to be resolved; rather than a developer having to fix the bug in dozens of source code locations, they may only need to change code in a single or few areas if perhaps the amount of code can be reduced with better practices by the help of code clone detection \citep{cc_manage}. It is suspected that 10 to 23\% of large software projects are composed of duplicated code \citep{taxonomy, evaluation}. Semantic code clone detection could help developers with the practice of code reusability, perhaps the problem they are trying to currently solve has previously been accomplished in the code base, and adding new classes and structures would be unnecessary. This could be accomplished by finding semantic code clones within the enterprise system and alerting the developer that they could potentially utilize this pre-developed feature - thus reducing development time and bug fixing time \citep{cc_manage} and of course, in turn, the maintenance costs.
+
+% This paper will highlight our solution to the topic of code semantic clone detection in enterprise applications to help enterprise software providers reduce maintenance costs and analyze several desired metrics. In Section 2, this paper will outline the state of the art and the other approaches to code clone detection focusing on the methodologies of general code clone detection and then narrowing to the focus of semantic code clones. Then, Section 3 will outline our proposed method of detection followed by Section 4 - a case study on an enterprise application. Lastly, we will conclude by summarizing the results from our experiment and highlighting important notes and concepts that can be gleaned through our research.
+
+\section{Related Work}
+\subsection{State of the Art}
+Code clones are blocks of code that have been copied from some source and pasted elsewhere, not necessarily always from the parent system \citep{cc_manage,walker2020open}. There are 4 code clone types or classes: type 1 - exact clones, type 2 - parameterized clones, type 3 - near-miss clones, and type 4 - semantic code clones \citep{cc_manage, ref9, ref10, businessclones}. Type 1 is self-descriptive, a block of code is a type 1 clone if an exact copy of the source code can be found elsewhere. Type 2 pertains to the same structure of code, however, variables or function calls may have different names. Type 3 clones have the same flow and structure but with changed names, as with type 2, and injected subroutines. The focus for this paper, type 4 clones, or semantic clones, are those which have the same behavior but different structure or method of approach \citep{cc_manage}.
+
+Much research has been contributed to the field of code clone detection, from types 1 to types 4 alike. However, the research into developing tools focused on enterprise systems is underdeveloped - and as emphasized from the introduction - clearly well needed. One tool name DSCCD (Dynamic and Static Code Clone Detector) \citep{cc_ams_pdg} is able to detect semantic code clones - the most challenging of the 4 types to detect - at a rate of accuracy at 66\%. The tool was developed to weigh the benefits of run time versus the reduction of false positives. The approach does as intended; however, a thorough analysis of a codebase for semantic code clone detection is naturally a computation-time consuming task. The case study done over DSCCD had 12 semantic code clones written into it, and in order to get their 66\% overall accuracy rating, it took over 426 seconds in one study \citep{cc_ams_pdg}.  The benefit of this system and their contribution to the field was not necessarily moot, they utilized both dynamic and static analysis via Program Dependency Graphs (PDGs) and Abstract Memory States (AMS). The PDGs provide a higher level flow analysis for the semantic clone detection, and the AMS provides a quick, lower-level analysis \citep{cc_ams_pdg}. While using AMS helped lessen the run time and lowered false positive rates, AMS methods cannot handle scopes beyond single methods. This flaw renders them much less useful for enterprise applications, where the flow of method calls is more important for determining duplicate behavior due to separation of concerns making some methods extremely short.
+
+For example, consider the following; let there be some method $A$ that performs an action $a$. Create some new method $B$ such that $B$ calls $A$ and returns the action $a$. It is trivial to see that $B$ does the same exact thing as $A$, however, if the flows of these two methods are not analyzed and compared, they will not be tagged as semantic clones though it is clearly evident that they are. Semantic clone detection should be agnostic of lines of code.
+
+One approach that was able to resolve many of these qualms was done with the implementation of deep learning. Research done by White et al. \citep{deep} lead to the development of a deep learning algorithm that was capable of analyzing massive codebases with extremely low false-positive rates. White et al. managed to get 93\% true positives, taking only around 3 seconds using a model trained off of ASTs and 35 seconds using a proprietary greedy algorithm. White et al. discovered dozens of types 1 through 3 clones in multiple systems and small number (5) of type 4 clones. White et al. had developed software that could analyze systems with exceptionally large code-bases (such as Hibernate or Java JDK); the caveat being that running on a new system requires training the model on that system, and the training takes an equally exceptional amount of time. Their example of using Java JDK, with over 500,000 lines of code (not unreasonable for large enterprise applications), took 2,977 seconds to train via the less accurate AST method and 14,965 seconds via their greedy learning method. Considering that enterprise applications are explicitly based on business logic that may change and the constant evolution of such systems, any given enterprise application will have to be constantly re-fed into the model for re-training to provide an accurate model for what code clones may look like.
+
+White et al. are not the first to attempt code clone detection via machine learning approaches, Yu et al. propose a similar method by running two simultaneous neural networks over each pair of code snippets and categorize them neatly into one of many types of clones (such as type 1, type 2, strongly type 3, type 3, or weak type 3 that they interchange as potentially type 4) \citep{neural}. The approach provided by Yu et al. is wonderful and boasts strong accuracies surpassing even 96\%, however, a similar pitfall of complexity and training time pends the approach lackluster for enterprise solutions. Yu et al. do not divulge much information about the performance of their algorithms - beyond that training takes several hours - so their utility as an enterprise application code clone detection tool is severely limited.
+
+Other attempts at machine learning-based analysis such as that by Sheneamer et al. \citep{mlearning}, which uses 15 machine learning algorithms, and Buch et al. \citep{aggregation} are competitive in accuracy and performance at run time, however, are system-specific in that they similarly need to be trained for each code base and do not consider the meta-information provided by enterprise structures and patterns.
+
+The tool CCFinder by Kamiya et al. is an example of code clone detection that has been implemented and is capable of discovering types 1 through 3 code clones efficiently and effectively \citep{ccfinder}. Kamiya et al. focus heavily on maintainability and can help users determine if a code clone is safe to remove or reduce with impact to the system \citep{ccfinder}, however, they acknowledge inter-method flows are challenging to capture and they focus exclusively on source code analysis, thus this tool is not beneficial for large and complex enterprise systems and their dependency on inter-flow communication. Because CCFinder is not able to capture type 4 clones, there must be even some code clones technically of the 3rd type, such as described in the example provided above, that cannot be found due to the lack of flow analysis. So, even tools that are fantastic for types 1 through 3 code clones may not provide even a necessarily useful analysis for enterprise applications.
+
+There are dozens of implementations of code clone detection \citep{walker2020open}, many even specializing in semantic types. However, these implementations are strictly theoretical and academic and are hard to implement and use in real-world applications. Other tools such as Agec, by Kamiya et al. \citep{agec} and the algorithm by Tekchandani et al. \citep{iot} provide code clone detection solutions for type 4 specifically, but also fall short in these same ways.
+
+\subsection{Program Representation}
+We intend to show that to effectively gather semantic code clones of an enterprise system, the optimal choice is to use  Control-Flow Graphs or (CFGs) to represent the code segments in question. An CFG is a special type of call graph where we let the nodes represent the methods of the system and the edges as calls to other methods within the system. Our preference toward this method of program representation over other methods (token-based \citep{tokendef}, Abstract Syntax Tree (AST)\citep{astdef}, Abstract State Memory (ASM)\citep{asmdef},Program Dependency Graph (PDG)\citep{pdgdef}, etc.) is to capture more meta-information regarding the context of the code clones or methods with regards to an enterprise architecture.
+
+Some meta-information we may want to collect and display, and potentially analyze further in future research, could be where code clones are being found in the enterprise system based on GRASP patterns \citep{grasp} and what layer of the application they are found in \citep{patterns}. This information, that is only accessible in a higher-level abstraction such as an CFG, could allow for our program to eventually be filtered to only analyze service modules or controller modules; which would help developers decide whether their service/controller/etc. classes could be further split or merged to improve cohesion and reduce unnecessary coupling. Not only would performance greatly improved if users could filter code clone detection by concern but also would the code clone detection be more meaningful having knowledge of where in the application they are found - which can be found and used in the CFGs via meta-information used when developing enterprise applications such as annotations in Java code, such as that provided by the common and widely used Spring Framework \citep{spring}, or similar means in other enterprise frameworks.
+
+As evident through our state of the art, it is obvious to see that AST and token-based approaches are highly popular methods of program representation for finding code clones both semantic and syntactic, so our choice to use CFGs is explicit and oriented particularly toward enterprise applications. We pose that the benefit to an CFG, which is a type of control flow graph, over that of an AST is that ASTs provide too low-level a depiction of the program and can consume too much memory to analyze, especially since we are not interested in clone detection that requires such low-level, syntactic knowledge.
+
+Code clone detection is a widely studied field, but it is lacking in its depth with respect to enterprise applications. It is not the case, however, that business domain related code clones have never been researched, but many glances into this field left many questions unanswered and only emphasized the need for such a tool than provided one \citep{businessclones}.
+
+% I believe the following to be addressed:
+% % 1. Code clone algorithms for 1, 2, 3, 4, but in 4. no specific focus on EA (enterprise applications) - so we are filing up a gap
+% % 2. Representation of a program via Inter-procedural Control Flow Graphs, alternatives in AST and PDG, less likely to capture EA structure, too low level. Inter-procedural Control flow graph is the best, but do not capture its semantic meaning, often given by annotations, types of input and output objects
+% % 3. EA - how it is structures, common patterns, like controller, repository, services, etc. And ultimately, that we can take some the properties and make use of them
+\section{Proposed Method}
+
+We base our idea of detecting semantic code clones by focusing primarily on the semantic meaning of an CFG, rather than on the structure itself. We used CFGs to represent the enterprise system.
+
+Semantic properties (hereby referred to only as properties) are derived from the metadata that are associated in each method in the form of configuration files or annotations. We examine properties of each graph by applying a global similarity function as shown in the Definition \ref{globalsimilarity}. Properties of the CFG bring higher value to identifying code clones because programs in enterprise systems tend to be repetitive in their structure but differ in meaning of the data in the input and output of the program \citep{patterns}. In other words, not every structural repetition of code is a code clone, but a semantic repetition is very likely to be a code clone. Our approach consists from four stages, graph transformation, graph quantification, similarity comparison, and classification as shown in Figure \ref{fig:algorithm}.
+
+
+\begin{definition}[Global similarity]
+\label{globalsimilarity}
+$$G(A,B) = \sum_{i=1}^{k} w_i \times sim_i(a_i, b_i)/ \sum_{i=1}^{k} w_i $$
+{\it Where $k$ is the number of attributes, $w_i$ is the weight of importance of an attribute $i$, $sim_i(a_i, b_i)$ is a local similarity function taking attributes $i$ of cases $A$ and $B$, and $w$ is a weight coefficient corresponding to the importance of the method type in the system.}
+\end{definition}
+
+\begin{figure}[!htbp]
+\begin{center}
+%% REMOVE ANGLE
+% \includegraphics[angle=90,origin=c,scale=0.45]{state_diagram}
+\includegraphics[scale=0.45]{algorithm_chart2}
+
+% \vspace{-8.5em} %% REMOVE
+\caption{Schema of the algorithm}
+\label{fig:algorithm}
+\end{center}
+\end{figure}
+
+In the first transformation phase, we transform Java source code into an CFG. We used Java Reflection and Javassist libraries to scan the code for all declared methods, then, for each declared method, we get each method call within its body. We used depth-first search to construct a graph for each method that does not have a parent method call. Such method is an entry-point to the enterprise application. For illustration consider an example of a system, where an endpoint method $create$ in the $PosController$ that calls $savePos$ method in the service $PosService$. Next, $PosService$ makes two procedure calls, first to some third party API, and the second to $PosRepository$. The schema of this code is depicted in the Listing \ref{lst:code} and the resulting CFG is shown in Figure \ref{fig:icfg}.
+
+\begin{figure*}[!htb]
+\noindent\begin{minipage}{.6\textwidth}
+
+\begin{lstlisting}[
+basicstyle=\ttfamily\footnotesize,
+framesep=0.051cm, framerule=0pt,
+language=Java,label={lst:code},
+xleftmargin=0.05\textwidth,
+%xrightmargin=0.2\textwidth,
+caption=Source code example,
+captionpos=b,numbers=left,
+floatplacement=H]
+ @Controller
+ public class PosController{
+     @PreAuthorize("hasRole('USER')")
+     @RequestMapping(value = "/pos",
+                    method = RequestMethod.POST)
+     public POS create (@RequestBody Pos pos) {
+         return service.save(pos);
+     }
+ }
+
+ @Service
+ public class PosService {
+     public Pos savePos(Pos pos){
+         Props p = restTemplate.postObject("/props");
+         pos.setProps(p);
+         return repository.save(pos);
+     }
+ }
+
+ @Repository
+ public interface PosRepository {
+     Pos save(Pos pos);
+ }
+\end{lstlisting}
+
+\end{minipage}\hfill
+\begin{minipage}{.39\textwidth}
+
+%\begin{figure}[!htbp]
+\begin{center}
+\vspace{-2.5em}
+\includegraphics[width=6cm]{icfg}
+\vspace{-1em}
+\caption{Example of Control flow graph}
+\label{fig:icfg}
+\end{center}
+%\end{figure}
+
+\end{minipage}
+\vspace{-1.5em}
+\end{figure*}
+
+Next, we quantify each declared method by associating a set of properties $P$ with a method as shown in Figure~\ref{fig:icfg}. The set of properties varies by the type of the method as shown in the Table \ref{table:properties}. Each method type a has set of associated properties that correspond to its role in the system. All types share argument types, return types, and metadata associated with the methods. The metadata is used to describe the purpose of the method in the system (input handler, database connector, etc.) and associated properties, e.g. HTTP type. Thus, our utilization of CFGs provides additional meaning that determines individual component's roles in the system.
+
+\begin{table}[!htbp]
+\Small
+    \begin{center}
+         \begin{tabular}{||c | c | c | c ||}
+         \hline
+         Method  & Similarity & Weight & Properties \\ [0.5ex]
+         Type & name & & \\
+         \hline\hline
+         Controller & ctr & 3 & arguments, return type, \\
+          & & & HTTP method, security \\
+         \hline
+         Services & fc & 1 & arguments, return type \\
+         \hline
+         Message calls & rfc & 2 & IP, port, http type,  \\
+         & & & arguments, return entity \\
+         \hline
+         Repository & rp & 2 & Arguments, Return type, \\
+         & & & Database operation \\
+         \hline
+        \end{tabular}
+    \end{center}
+    \caption{Classification of properties}
+    \label{table:properties}
+    \vspace{-1.5em}
+\end{table}
+
+% Please review
+In the next phase, we apply a global similarity function on properties $P$ of two arbitrary CFGs, as shown in the Definition \ref{globalsimilarity}. The global similarity function $G$ applies the similarity function for each Method type and multiplies the result by the weight coefficient that corresponds to the importance of a particular method type in the system as shown in the Table~\ref{table:properties}. Method type \textit{Controller} has the highest significance because it denotes the input, output, and type of operation of a particular entry point. These properties tend to be unique in the system and therefore have a weight of 3. Method type \textit{Repository} persists data to stable storage, and \textit{Message calls} triggers actions usually via HTTP calls on some third party. Both of them have a significant impact on the system and thus have a weight of 2. Method type \textit{Services} have the least importance; service methods are usually reused within the system and thus have weights around 1.
+
+
+
+We also provide definitions for various other local similarity functions as shown in Definition \ref{localsimilarity}. The function takes as input properties of each method and evaluates each attribute. The similarity function for a controller method evaluates its arguments, return type and HTTP method. These similarity functions are all specially targeted for each method type in the system, but all of the methods share argument and return object types.
+
+\begin{definition}
+\label{localsimilarity}
+$$sim(a_i, b_i) = ctr(a_i, b_i) + fc(a_i, b_i) + rfc(a_i, b_i) + rp(a_i, b_i) $$
+\end{definition}
+
+The similarity function $ctr$ targets controller methods, which is a pattern for method that handles input from the user. These methods are usually in REST formats and thus accept HTTP requests; hence the the HTTP method type (GET, POST, PUT, DELETE). Next, it evaluates property security. Endpoints usually have restricted access based on the roles of individual users within an enterprise system. This security measure is referred to as a Role-Based Access Control. We include definition of permission roles, for instance \textit{user} or \textit{admin}, into the metadata and thus including in the similarity function.
+
+The similarity function $rfc$ compares all method calls from one system to another system, e.g. HTTP calls from CFG $A$ to $B$ are retrieved and proportioned into a ratio.
+When comparing two function calls, similarity function $rfc$ takes into account IP address, port, HTTP type, arguments type and return type. The similarity function $fc$ does the same as $rfc$, but for method calls in the system.
+Lastly, the similarity function $rp$ compares methods working with databases by evaluating database operations as shown in Table~\ref{table:properties}.
+
+
+
+The last stage is applying classification of the similarity between CFGs in the system. We classify graphs based on their global similarity into three categories highlighted in Table \ref{table:classification}. In the first category are the pairs of CFGs that are similar in all local similarity groups or differ in only one; these correspond to an interval of global similarity within [1.0, 0.91]. Category B has a larger tolerance, thus it encompasses code clones with one or two different local functions. Finally, category C has global similarity within the range [0.8, 0.71] and refers to pairs that differ in 2 to 3 functions.
+
+\begin{table}[!htbp]
+    \begin{center}
+     \begin{tabular}{|c | c | c |}
+     \hline
+     Classification  & Global  & Characteristics \\ [0.5ex]
+     Type & similarity & \\
+     \hline
+     A & 1.0 - 0.91 & Same or differs in one function \\
+     \hline
+     B & 0.9 - 0.81 & Differs in 1-2 functions  \\
+     \hline
+     C & 0.8 - 0.71 & Differs in 2-3 functions \\
+     \hline
+    \end{tabular}
+    \caption{Classification of code clones}
+        \label{table:classification}
+    \end{center}
+\end{table}{}
+
+
+\section{Case Study}
+
+For our case study, we used the Enterprise Application (EA) for managing and evaluating test questions. The EA was developed at Baylor University as part of an NSF project proposal for Central Texas Computational Thinking, Coding and Tinkering. The application uses microservice architecture \cite{cerny2018} and Spring Boot \cite{spring} with a set of API methods using standard procedures of multilayered application such as controllers, services, repositories and Role-Based Access Control (RBAC) authorization. We analyzed the application in a study to detect semantic code clones across the application. In the next part, we will discuss an example of a semantic code clone and the overall results of our study.
+
+% example of 2 same functions
+
+\begin{table}[h!]
+\noindent\begin{minipage}{.45\textwidth}
+
+%\begin{table}[h!]
+    \begin{center}
+     \begin{tabular}{|c  c  c |}
+     \hline
+     	& $CFG_A$ &	$CFG_B$ \\
+     	\hline
+\textbf{Controller} - \textit{ctr}	&  &	 \\
+\hline
+arguments &	ExamDTO	& ExamDTO \\
+\hline
+return type	& Exam	& Exam \\
+\hline
+HTTP Method	& POST	& POST \\
+\hline
+Security &	Admin &	User \\
+\hline
+\textbf{Service methods} - \textit{fc} &	3 &	3 \\
+\hline
+\textbf{Rest methods} - \textit{rfc} &	2 &	2 \\
+\hline
+\textbf{Repository} - \textit{rp} & &		 \\
+\hline
+Database Operation &	create &	create \\
+\hline
+arguments &	Exam &	Exam \\
+\hline
+return type &	Exam &	Exam \\
+\hline
+    \end{tabular}
+    \caption{Example of properties of 2 CFGs}
+        \label{table:2ICFGs}
+    \end{center}
+%\end{table}{}
+
+\end{minipage}\hspace{3em}
+\begin{minipage}{.41\textwidth}
+
+%\begin{table}[h!]
+    \begin{center}
+     \begin{tabular}{|c c c  c |}
+     \hline
+	   & Similarity &	Weight &	Weighed SIM \\
+	   \hline
+        ctr	& 0.75 &	3 &	2.25 \\
+        \hline
+        fc &	1 &	1 &	1  \\
+        \hline
+        rfc	& 1 &	2 &	2  \\
+        \hline
+        rp &	1 &	2 &	2 \\
+        \hline
+        \textbf{total} &	\textbf{3.75} &	&	\textbf{7.25} \\
+     \hline
+    \end{tabular}
+    \caption{Example of results of similarity function}
+        \label{table:similarity}
+    \end{center}
+%\end{table}{}
+
+\end{minipage}
+\vspace{-1.5em}
+\end{table}
+
+We present an example of derived properties from two CFGs, $CFG_A$ and $CFG_B$ derived from the EA as shown in the Table \ref{table:2ICFGs}. Both of the CFGs have the same input (object $ExamDTO$), output (an object $Exam$), use the same HTTP method \textit{POST}, use a function of that also has the same inputs and outputs, and persist the same object type with the same database operation \textit{create}.
+
+
+
+% calculation of the similarity functions
+
+Properties of both graphs $CFG_A$ and $CFG_B$ from the Table \ref{table:2ICFGs} were evaluated by local similarity functions as described in the Table \ref{table:similarity}. Similarity functions $fc$, $rfc$, $rp$ give a full match result, whereas the similarity function $ctr$ shows a lower match value due to the different signatures of RBAC security.
+
+
+
+The Table \ref{table:similarity} shows total similarity 3.75 and weight 7.25. Since the maximum possible value of similarity is 8, the graphs $CFG_A$ and $CFG_B$ have a similarity 0.908. This value falls into category A on our scale from Table \ref{table:classification}, thus, this is an example of two strongly semantically similar CFGs. We used weighed all of the similarities in order to reflect their importance in the system. For example, controllers are extremely important since they define what data is accepted and produced. Methods working database and services making rest calls also have high significance as these operations are specific to business rules in the enterprise system. Ordinary method calls are not weighed as much since they are repetitive in the system.
+
+% table with totals
+
+
+
+We applied our approach in the study. Table \ref{table:totals} shows that we derived 20 CFGs from this EA, which comes out to 190 combinations in total. After applying similarity functions on each pair, 6 pairs had a similarity index above 0.71 and thus fell into respective categories as shown in the Table \ref{table:count}, which shows that one pair of CFGs was strongly similar and 5 were fairly similar - which account for 3\% of all combinations.
+
+% \begin{table}[h!]
+%     \begin{center}
+%      \begin{tabular}{|c c |}
+%      \hline
+%         Category &	Count \\
+%         \hline
+%         A &	1 \\
+%         B &	3 \\
+%         C &	2 \\
+%      \hline
+%     \end{tabular}
+%     \caption{Categorizing found clones}
+%         \label{table:count}
+%     \end{center}
+% \end{table}{}
+
+\begin{table}[h!]
+\noindent\begin{minipage}{.45\textwidth}
+
+%\begin{table}[h!]
+    \begin{center}
+     \begin{tabular}{|c | c |}
+     \hline
+	   Totals &	Count \\
+	   \hline
+            modules	&	37 \\ \hline
+            CFGs	&	163 \\ \hline
+            combinations	&	13203 \\
+        \hline
+    \end{tabular}
+    \caption{Results quantification}
+        \label{table:totals}
+    \end{center}
+%\end{table}{}
+
+\end{minipage}\hspace{3em}
+\begin{minipage}{.41\textwidth}
+
+%\begin{table}[h!]
+\begin{tabular}{|l|l|l|}
+\hline
+Clone Type & Total Nr & Percentage \\ \hline
+Type A & 46 & 0.35 \% \\ \hline
+Type B & 88 & 0.67 \% \\ \hline
+Type C & 588 & 4.45 \% \\ \hline
+Others & 12481 & 94.53 \% \\ \hline
+\end{tabular}
+\caption{CFG clones percentage}
+\label{table:count}
+%\end{table}
+
+\end{minipage}
+\end{table}
+
+The percentage of actual clones shows that our approach is not prone to include (TODO jan pridat manualni overeni)false positives but rather reduces all combinations into few pairs that are guaranteed to be relational. This is in part caused by having a high sensitivity or weight based on input and output types. Types of arguments and return values are important because the same constructs intended for other data types will tend to have the exact same behavior - such as a repository method to save a question to the questions table will semantically behave the same as a repository method to save a test to the tests table, both are necessary and cannot be removed from the application due to semantic similarity alone. This sensitivity with the weights avoids including structurally identical but semantically different CFGs as semantic clones in our results.
+
+
+TODO referecne table 7, reference fig 3. Include git link to case study?
+
+\subsection{Result discussion}
+TODO
+
+\subsection{Threats to Validity}
+Any given code clone detection tool falls under the scrutiny of determining between an output giving false positives or true positives. We set weights for local similarity functions that correspond to real importance in enterprise systems, however, we did not execute the experiment under various settings in an attempt to produce an optimal solution. Semantic type clones require a low threshold in order to detect, therefore we set the classification classes to be within the first third of our scale.
+
+% Our tool is no exception. The best that we can do as researchers is develop methods of increasing our true positives to false positives ratio, however, determining whether something is a false positive or not is only currently possible with human intervention. However, this threat to validity is not unique to our tool. Potentially, in future work we could implement a second DFS and comparison that runs scrupulously on just the results to even further reduce the chance of false positives. This method of adding checks to the end of the process rather than the beginning may help reduce false positives while not reducing the number of clones we can detect.
+
+% The problem of code clone detection itself brings about many issues, as described previously, attempting to find semantic clones of any graph structure can prove to be an NP-Complete problem.
+
+% Threats that are unique would be our weight and classification system which are proprietary to our research. Further study needs to be done in order to determine whether our weights are viable in more systems and to find potential improvements or qualifications that could affect the weights we did not consider. We did not alter the weights after running the experiment to find better values or optimum solutions. Similarly, the classifications we created - such as our local similarity functions - may have different magnitudes of operability depending on the specificities of the enterprise application being studied.
+
+
+
+% \begin{table*}[t]
+% \small
+% \begin{tabular}{|l|l|l|l|}
+% \hline
+% Module A Name & Module A Cfg & Module B Name & Module B Cfg \\ \hline
+% ts-order-other-service & getOrderById & ts-order-service & getOrderPrice \\  \hline
+% ts-order-other-service & getOrderById & ts-order-service & payOrder \\  \hline
+% ts-order-other-service & getOrderById & ts-order-service & getOrderById \\  \hline
+% ts-order-other-service & getOrderById & ts-order-other-service & getOrderPrice \\  \hline
+% ts-order-other-service & getOrderById & ts-order-other-service & payOrder \\  \hline
+% ts-order-service & getTicketListByDateAndTripId & ts-order-other-service & getTicketListByDateAndTripId \\  \hline
+% ts-route-service & queryById & ts-route-service & queryAll \\  \hline
+% ts-order-service & createNewOrder & ts-order-service & addCreateNewOrder \\  \hline
+% ts-order-service & createNewOrder & ts-order-other-service & createNewOrder \\  \hline
+% ts-order-service & createNewOrder & ts-order-other-service & addCreateNewOrder \\  \hline
+% ts-seat-service & getLeftTicketOfInterval & ts-seat-service & create \\  \hline
+% ts-order-service & addCreateNewOrder & ts-order-other-service & createNewOrder \\  \hline
+% ts-order-service & addCreateNewOrder & ts-order-other-service & addCreateNewOrder \\  \hline
+% ts-seat-service &  & ts-seat-service &  \\  \hline
+% ts-order-service & queryOrdersForRefresh & ts-order-other-service & queryOrdersForRefresh \\  \hline
+% ts-seat-service &  & ts-seat-service &  \\  \hline
+% ts-order-service & calculateSoldTicket & ts-order-other-service & calculateSoldTicket \\  \hline
+% ts-order-service & getOrderPrice & ts-order-service & payOrder \\  \hline
+% ts-order-service & getOrderPrice & ts-order-service & getOrderById \\  \hline
+% ts-order-service & getOrderPrice & ts-order-other-service & getOrderPrice \\  \hline
+% ts-order-service & getOrderPrice & ts-order-other-service & payOrder \\  \hline
+% ts-order-service & payOrder & ts-order-service & getOrderById \\  \hline
+% ts-order-service & payOrder & ts-order-other-service & getOrderPrice \\  \hline
+% ts-order-service & payOrder & ts-order-other-service & payOrder \\  \hline
+% ts-order-service & getOrderById & ts-order-other-service & getOrderPrice \\  \hline
+% ts-order-service & getOrderById & ts-order-other-service & payOrder \\  \hline
+% ts-payment-service & pay & ts-payment-service & addMoney \\  \hline
+% ts-travel2-service & getTrainTypeByTripId & ts-travel-service & getTrainTypeByTripId \\  \hline
+% ts-travel2-service & getRouteByTripId & ts-travel-service & getRouteByTripId \\  \hline
+% ts-travel2-service & getTripsByRouteId & ts-travel-service & getTripsByRouteId \\  \hline
+% ts-travel2-service & createTrip & ts-travel-service & createTrip \\  \hline
+% ts-travel2-service & retrieve & ts-travel-service & retrieve \\  \hline
+% ts-travel2-service & deleteTrip & ts-travel-service & deleteTrip \\  \hline
+% ts-travel2-service & queryInfo & ts-travel-service & queryInfo \\  \hline
+% ts-travel2-service & getTripAllDetailInfo & ts-travel-service & getTripAllDetailInfo \\  \hline
+% ts-travel2-service & queryAll & ts-travel-service & queryAll \\  \hline
+% ts-travel2-service & adminQueryAll & ts-travel-service & adminQueryAll \\  \hline
+% ts-travel-plan & getByCheapest & ts-travel-plan & getByQuickest \\  \hline
+% ts-auth-service & getAllUsers & ts-user-service & getAllUser \\  \hline
+% ts-cancel-service & calculate & ts-cancel-service & cancelTicket \\  \hline
+% ts-consign-price-service & getPriceInfo & ts-verification-code-service & imageCode \\  \hline
+% ts-consign-service & findByAccountId & ts-consign-service & findByOrderId \\  \hline
+% ts-contacts-service & createNewContacts & ts-contacts-service & createNewContactsAdmin \\  \hline
+% ts-execute-service & executeTicket & ts-execute-service & collectTicket \\  \hline
+% ts-order-other-service & createNewOrder & ts-order-other-service & addCreateNewOrder \\  \hline
+% ts-order-other-service & getOrderPrice & ts-order-other-service & payOrder \\  \hline
+% \end{tabular}
+% \caption{Categorizing found clones}
+% \label{table:count2}
+% \end{table*}
+
+
+
+\begin{table}[h!]
+\begin{tabular}{|l|l|l|l|l|}
+\hline
+Nr & Module Name & CFGs & Similar Module & Type A Percentage  \\ \hline
+7 & ts-auth-service & 4 & ts-user-service & 25 \%  \\ \hline
+9 & ts-cancel-service & 2 & ts-cancel-service & 100 \%  \\ \hline
+11 & ts-consign-price-service & 4 & ts-verification-code-service & 25 \%  \\ \hline
+12 & ts-consign-service & 5 & ts-consign-service & 40 \%  \\ \hline
+13 & ts-contacts-service & 3 & ts-contacts-service & 66.67 \%  \\ \hline
+14 & ts-execute-service & 2 & 14 & 100 \%  \\ \hline
+22 & ts-order-other-service & 8 & 23 & 100 \%  \\ \hline
+23 & ts-order-service & 8 & 23 & 100 \%  \\ \hline
+24 & ts-payment-service & 3 & 24 & 66.67 \%  \\ \hline
+30 & ts-route-service & 5 & 30 & 40 \%  \\ \hline
+31 & ts-seat-service & 6 & 31 & 100 \%  \\ \hline
+35 & ts-travel-service & 23 & 35 & 95.65 \%  \\ \hline
+36 & ts-user-service & 4 & 7 & 25 \%  \\ \hline
+37 & ts-verification-code-service & 2 & 11 & 50 \%  \\ \hline
+\end{tabular}
+\caption{CFG Type A clones per module distribution}
+\label{table:count2}
+\end{table}
+
+
+\begin{figure}[!htbp]
+\begin{center}
+\includegraphics[angle=-90, width=16cm]{module-clone}
+\caption{Example of Control flow graph}
+\label{fig:bubbleCfg}
+\end{center}
+\end{figure}
+
+
+
+\section{Conclusion}
+% In the introduction, we highlighted what enterprise applications are and why they matter. Then we discussed the costs of maintaining these applications, which we showed is heavily dependent on maintenance, which, in turn is dependent on code complexity. Then we showed that code complexity increases linearly with the increase of coupling due to code clones. So, in turn, code clones transitively cause an increase in maintenance costs for enterprise applications. We highlight the problem of code clone detection mainly with respect to code health and maintenance, and we pose our tool as viable to be used in a real world setting with high extensibility to many variations of enterprise frameworks.
+
+Our method for semantic code clone detection targets enterprise applications, a massive industry, yet an area of this field that has barely been studied. Because of our method of using CFGs we are able to capture more information about the system with regards to its architecture, which provides us with the means to analyze more criteria and calculate more metrics at a more efficient rate than if we were to use a more storage intensive method like ASTs or tokens.
+
+The task of finding code clones in any code base is not a trivial one, with finding semantic code clones via some form of graph traversal being an NP-Complete problem. Therefore, our ability to produce reasonable results efficiently with the complexity of $O(n^2)$ is impressive when considering that our method of CFG generation produces only tens of operations $n$. Our method of building CFGs is also efficient, needing to scan the codebase only once using a depth first search to check all methods and build out their children list.
+
+Another benefit to our approach is the extensibility. When it comes to enterprise applications, extensibility is a marketable property - as the development of microservice architectures exists thanks to the principle of extensibility. So, thanks to our extensibility at both a micro and macro level, it would not be too much of an investment to transform this tool into a microservice that could be utilized by other microservices \cite{walker2020cc}. The macro-extensibility is the capability to become a module in some other suite, is not the only type of extensibility present. More micro-extensibility exists since, to expand on this tool, developers need only to add new local similarity functions to capture new metrics or other kinds of enterprise framework properties. So, the inner workings of our tool itself are similarly extensible. A tool like ours could be an essential boon to quality assurance teams for software providing companies world-wide.
+
+For future work, new metrics or other programming language support could be added. For example, there could be a measurement for procedural entropy of the system by running checks on each git commit and calculate the degradation and code clone accumulation over a time period. In the future we could implement the means to measuring greater distances between CFGs using the meta-information and enterprise design patterns to analyze whether a controller class is behaving too much like a service class or etc., the possibilities for introducing new metrics are endless thanks to our method of developing an enterprise application code clone detection tool using enterprise architecture methodologies.
+
+\begin{acks}
+This material is based upon work supported by the National Science Foundation under Grant No. 1854049
+\end{acks}
+
+
+% what those properties and what is their value in finding code clones
+% how we are going to compare them - similarity function
+% demonstrate on some example
+% draw picture of 2 control flow diagrams with properties
+% enterprise systems consist of inputs to the system, input processing, and retrieving data, persisting data to the storage or sending data to another system. enterprise systems thus have a mesh of programs accepting data, modifying them and outputting them to various sources  \ref{enterprise-systems-architecture}.
+% We represented each program in the system as an abstract syntax tree \ref{}, but we included only statements including a method call or a decision point or a cycle. Each method in AST is associated with properties. All methods are associated with the class type of the return object and class types of the arguments. More specifically, methods on the entry-level, usually described as a controller method, accept request from outside. The REST model is predominant \ref{} on the controller layer of enterprise systems; therefore, we included properties such as type of HTTP method (GET, POST, PUT, DELETE). Next property included in the controller method is security, which is a set of roles that can use the entry point \ref{}. For instance, only request associated with role \textit{user} or \textit{admin} can use this resource.
+% design patterns, controller, repository,
+
+% https://www.sciencedirect.com/topics/engineering/similarity-function
+% The local similarity function deals with a value of a single attribute and takes the values from the interval [0,1].
+
+% where wi-weight of importance of an attribute, taking the integer values from 0 to 10;
+
+
+
+
+
+
+
+
+
+
+
+% $\omega$ $\psi$ $\Omega$ $\Psi$
+
+% 1. Describe a story
+% 2. Table with properties quantification
+
+% Benchmark creation of enterprise system
+
+
+
+% About OREO tool
+
+% \begin{center}
+%  \begin{tabular}{||c c c c c ||}
+%  \hline
+%  Tool & TP & TN & FP & FN    \\ [0.5ex]
+%  \hline\hline
+%  % Oreo & 5 & 0 & 160 & 10 \\
+%  % \hline
+%  Properties Approach & 12 & 4 & 15 & 8  \\
+%  \hline
+% \end{tabular}
+% \end{center}
+
+
+% \section{Introduction}
+
+% The \textit{proceedings} are the records of a conference.\footnote{This
+%   is a footnote}  ACM seeks
+% to give these conference by-products a uniform, high-quality
+% appearance.  To do this, ACM has some rigid requirements for the
+% format of the proceedings documents: there is a specified format
+% (balanced double columns), a specified set of fonts (Arial or
+% Helvetica and Times Roman) in certain specified sizes, a specified
+% live area, centered on the page, specified size of margins, specified
+% column width and gutter size.
+
+% Because the entire article is contained in the \textbf{document}
+% environment, you can indicate the start of a new paragraph with a
+% blank line in your input file; that is why this sentence forms a
+% separate paragraph.
+
+% \subsection{Type Changes and {\itshape Special} Characters}
+
+% We have already seen several typeface changes in this sample.  You can
+% indicate italicized words or phrases in your text with the command
+% \texttt{{\char'134}textit}; emboldening with the command
+% \texttt{{\char'134}textbf} and typewriter-style (for instance, for
+% computer code) with \texttt{{\char'134}texttt}.  But remember, you do
+% not have to indicate typestyle changes when such changes are part of
+% the \textit{structural} elements of your article; for instance, the
+% heading of this subsection will be in a sans serif\footnote{Another
+%   footnote here.  Let's make this a rather long one to see how it
+%   looks.} typeface, but that is handled by the document class file.
+% Take care with the use of\footnote{Another footnote.}  the
+% curly braces in typeface changes; they mark the beginning and end of
+% the text that is to be in the different typeface.
+
+% You can use whatever symbols, accented characters, or non-English
+% characters you need anywhere in your document; you can find a complete
+% list of what is available in the \textit{\LaTeX\ User's Guide}
+% \cite{Lamport:LaTeX}.
+
+% \subsection{Math Equations}
+% You may want to display math equations in three distinct styles:
+% inline, numbered or non-numbered display.  Each of
+% the three are discussed in the next sections.
+
+% \subsubsection{Inline (In-text) Equations}
+% A formula that appears in the running text is called an
+% inline or in-text formula.  It is produced by the
+% \textbf{math} environment, which can be
+% invoked with the usual \texttt{{\char'134}begin\,\ldots{\char'134}end}
+% construction or with the short form \texttt{\$\,\ldots\$}. You
+% can use any of the symbols and structures,
+% from $\alpha$ to $\omega$, available in
+% \LaTeX~\cite{Lamport:LaTeX}; this section will simply show a
+% few examples of in-text equations in context. Notice how
+% this equation:
+% \begin{math}
+%   \lim_{n\rightarrow \infty}x=0
+% \end{math},
+% set here in in-line math style, looks slightly different when
+% set in display style.  (See next section).
+
+% \subsubsection{Display Equations}
+% A numbered display equation---one set off by vertical space from the
+% text and centered horizontally---is produced by the \textbf{equation}
+% environment. An unnumbered display equation is produced by the
+% \textbf{displaymath} environment.
+
+% Again, in either environment, you can use any of the symbols
+% and structures available in \LaTeX\@; this section will just
+% give a couple of examples of display equations in context.
+% First, consider the equation, shown as an inline equation above:
+% \begin{equation}
+%   \lim_{n\rightarrow \infty}x=0
+% \end{equation}
+% Notice how it is formatted somewhat differently in
+% the \textbf{displaymath}
+% environment.  Now, we'll enter an unnumbered equation:
+% \begin{displaymath}
+%   \sum_{i=0}^{\infty} x + 1
+% \end{displaymath}
+% and follow it with another numbered equation:
+% \begin{equation}
+%   \sum_{i=0}^{\infty}x_i=\int_{0}^{\pi+2} f
+% \end{equation}
+% just to demonstrate \LaTeX's able handling of numbering.
+
+% \subsection{Citations}
+% Citations to articles~\cite{bowman:reasoning,
+% clark:pct, braams:babel, herlihy:methodology},
+% conference proceedings~\cite{clark:pct} or maybe
+% books \cite{Lamport:LaTeX, salas:calculus} listed
+% in the Bibliography section of your
+% article will occur throughout the text of your article.
+% You should use BibTeX to automatically produce this bibliography;
+% you simply need to insert one of several citation commands with
+% a key of the item cited in the proper location in
+% the \texttt{.tex} file~\cite{Lamport:LaTeX}.
+% The key is a short reference you invent to uniquely
+% identify each work; in this sample document, the key is
+% the first author's surname and a
+% word from the title.  This identifying key is included
+% with each item in the \texttt{.bib} file for your article.
+
+% The details of the construction of the \texttt{.bib} file
+% are beyond the scope of this sample document, but more
+% information can be found in the \textit{Author's Guide},
+% and exhaustive details in the \textit{\LaTeX\ User's
+% Guide} by Lamport~\shortcite{Lamport:LaTeX}.
+
+% This article shows only the plainest form
+% of the citation command, using \texttt{{\char'134}cite}.
+
+% Some examples.  A paginated journal article \cite{Abril07}, an enumerated
+% journal article \cite{Cohen07}, a reference to an entire issue \cite{JCohen96},
+% a monograph (whole book) \cite{Kosiur01}, a monograph/whole book in a series (see 2a in spec. document)
+% \cite{Harel79}, a divisible-book such as an anthology or compilation \cite{Editor00}
+% followed by the same example, however we only output the series if the volume number is given
+% \cite{Editor00a} (so Editor00a's series should NOT be present since it has no vol. no.),
+% a chapter in a divisible book \cite{Spector90}, a chapter in a divisible book
+% in a series \cite{Douglass98}, a multi-volume work as book \cite{Knuth97},
+% an article in a proceedings (of a conference, symposium, workshop for example)
+% (paginated proceedings article) \cite{Andler79}, a proceedings article
+% with all possible elements \cite{Smith10}, an example of an enumerated
+% proceedings article \cite{VanGundy07},
+% an informally published work \cite{Harel78}, a doctoral dissertation \cite{Clarkson85},
+% a master's thesis: \cite{anisi03}, an online document / world wide web
+% resource \cite{Thornburg01, Ablamowicz07, Poker06}, a video game (Case 1) \cite{Obama08} and (Case 2) \cite{Novak03}
+% and \cite{Lee05} and (Case 3) a patent \cite{JoeScientist001},
+% work accepted for publication \cite{rous08}, 'YYYYb'-test for prolific author
+% \cite{SaeediMEJ10} and \cite{SaeediJETC10}. Other cites might contain
+% 'duplicate' DOI and URLs (some SIAM articles) \cite{Kirschmer:2010:AEI:1958016.1958018}.
+% Boris / Barbara Beeton: multi-volume works as books
+% \cite{MR781536} and \cite{MR781537}.
+
+% A couple of citations with DOIs: \cite{2004:ITE:1009386.1010128,
+%   Kirschmer:2010:AEI:1958016.1958018}.
+
+% Online citations: \cite{TUGInstmem, Thornburg01, CTANacmart}.
+
+
+% \subsection{Tables}
+% Because tables cannot be split across pages, the best
+% placement for them is typically the top of the page
+% nearest their initial cite.  To
+% ensure this proper ``floating'' placement of tables, use the
+% environment \textbf{table} to enclose the table's contents and
+% the table caption.  The contents of the table itself must go
+% in the \textbf{tabular} environment, to
+% be aligned properly in rows and columns, with the desired
+% horizontal and vertical rules.  Again, detailed instructions
+% on \textbf{tabular} material
+% are found in the \textit{\LaTeX\ User's Guide}.
+
+% Immediately following this sentence is the point at which
+% Table~\ref{tab:freq} is included in the input file; compare the
+% placement of the table here with the table in the printed
+% output of this document.
+
+% \begin{table}
+%   \caption{Frequency of Special Characters}
+%   \label{tab:freq}
+%   \begin{tabular}{ccl}
+%     \toprule
+%     Non-English or Math&Frequency&Comments\\
+%     \midrule
+%     \O & 1 in 1,000& For Swedish names\\
+%     $\pi$ & 1 in 5& Common in math\\
+%     \$ & 4 in 5 & Used in business\\
+%     $\Psi^2_1$ & 1 in 40,000& Unexplained usage\\
+%   \bottomrule
+% \end{tabular}
+% \end{table}
+
+% To set a wider table, which takes up the whole width of the page's
+% live area, use the environment \textbf{table*} to enclose the table's
+% contents and the table caption.  As with a single-column table, this
+% wide table will ``float'' to a location deemed more desirable.
+% Immediately following this sentence is the point at which
+% Table~\ref{tab:commands} is included in the input file; again, it is
+% instructive to compare the placement of the table here with the table
+% in the printed output of this document.
+
+
+% \begin{table*}
+%   \caption{Some Typical Commands}
+%   \label{tab:commands}
+%   \begin{tabular}{ccl}
+%     \toprule
+%     Command &A Number & Comments\\
+%     \midrule
+%     \texttt{{\char'134}author} & 100& Author \\
+%     \texttt{{\char'134}table}& 300 & For tables\\
+%     \texttt{{\char'134}table*}& 400& For wider tables\\
+%     \bottomrule
+%   \end{tabular}
+% \end{table*}
+% % end the environment with {table*}, NOTE not {table}!
+
+% It is strongly recommended to use the package booktabs~\cite{Fear05}
+% and follow its main principles of typography with respect to tables:
+% \begin{enumerate}
+% \item Never, ever use vertical rules.
+% \item Never use double rules.
+% \end{enumerate}
+% It is also a good idea not to overuse horizontal rules.
+
+
+% \subsection{Figures}
+
+% Like tables, figures cannot be split across pages; the best placement
+% for them is typically the top or the bottom of the page nearest their
+% initial cite.  To ensure this proper ``floating'' placement of
+% figures, use the environment \textbf{figure} to enclose the figure and
+% its caption.
+
+% This sample document contains examples of \texttt{.eps} files to be
+% displayable with \LaTeX.  If you work with pdf\LaTeX, use files in the
+% \texttt{.pdf} format.  Note that most modern \TeX\ systems will convert
+% \texttt{.eps} to \texttt{.pdf} for you on the fly.  More details on
+% each of these are found in the \textit{Author's Guide}.
+
+% \begin{figure}
+% \includegraphics{fly}
+% \caption{A sample black and white graphic.}
+% \end{figure}
+
+% \begin{figure}
+% \includegraphics[height=1in, width=1in]{fly}
+% \caption{A sample black and white graphic
+% that has been resized with the \texttt{includegraphics} command.}
+% \end{figure}
+
+
+% As was the case with tables, you may want a figure that spans two
+% columns.  To do this, and still to ensure proper ``floating''
+% placement of tables, use the environment \textbf{figure*} to enclose
+% the figure and its caption.  And don't forget to end the environment
+% with \textbf{figure*}, not \textbf{figure}!
+
+% \begin{figure*}
+% \includegraphics{flies}
+% \caption{A sample black and white graphic
+% that needs to span two columns of text.}
+% \end{figure*}
+
+
+% \begin{figure}
+% \includegraphics[height=1in, width=1in]{rosette}
+% \caption{A sample black and white graphic that has
+% been resized with the \texttt{includegraphics} command.}
+% \end{figure}
+
+% \subsection{Theorem-like Constructs}
+
+% Other common constructs that may occur in your article are the forms
+% for logical constructs like theorems, axioms, corollaries and proofs.
+% ACM uses two types of these constructs:  theorem-like and
+% definition-like.
+
+% Here is a theorem:
+% \begin{theorem}
+%   Let $f$ be continuous on $[a,b]$.  If $G$ is
+%   an antiderivative for $f$ on $[a,b]$, then
+%   \begin{displaymath}
+%     \int^b_af(t)\,dt = G(b) - G(a).
+%   \end{displaymath}
+% \end{theorem}
+
+% Here is a definition:
+% \begin{definition}
+%   If $z$ is irrational, then by $e^z$ we mean the
+%   unique number that has
+%   logarithm $z$:
+%   \begin{displaymath}
+%     \log e^z = z.
+%   \end{displaymath}
+% \end{definition}
+
+% The pre-defined theorem-like constructs are \textbf{theorem},
+% \textbf{conjecture}, \textbf{proposition}, \textbf{lemma} and
+% \textbf{corollary}.  The pre-defined de\-fi\-ni\-ti\-on-like constructs are
+% \textbf{example} and \textbf{definition}.  You can add your own
+% constructs using the \textsl{amsthm} interface~\cite{Amsthm15}.  The
+% styles used in the \verb|\theoremstyle| command are \textbf{acmplain}
+% and \textbf{acmdefinition}.
+
+% Another construct is \textbf{proof}, for example,
+
+% \begin{proof}
+%   Suppose on the contrary there exists a real number $L$ such that
+%   \begin{displaymath}
+%     \lim_{x\rightarrow\infty} \frac{f(x)}{g(x)} = L.
+%   \end{displaymath}
+%   Then
+%   \begin{displaymath}
+%     l=\lim_{x\rightarrow c} f(x)
+%     = \lim_{x\rightarrow c}
+%     \left[ g{x} \cdot \frac{f(x)}{g(x)} \right ]
+%     = \lim_{x\rightarrow c} g(x) \cdot \lim_{x\rightarrow c}
+%     \frac{f(x)}{g(x)} = 0\cdot L = 0,
+%   \end{displaymath}
+%   which contradicts our assumption that $l\neq 0$.
+% \end{proof}
+
+% \section{Conclusions}
+% This paragraph will end the body of this sample document.
+% Remember that you might still have Acknowledgments or
+% Appendices; brief samples of these
+% follow.  There is still the Bibliography to deal with; and
+% we will make a disclaimer about that here: with the exception
+% of the reference to the \LaTeX\ book, the citations in
+% this paper are to articles which have nothing to
+% do with the present subject and are used as
+% examples only.
+% %\end{document}  % This is where a 'short' article might terminate
+
+
+
+% \appendix
+% %Appendix A
+% \section{Headings in Appendices}
+% The rules about hierarchical headings discussed above for
+% the body of the article are different in the appendices.
+% In the \textbf{appendix} environment, the command
+% \textbf{section} is used to
+% indicate the start of each Appendix, with alphabetic order
+% designation (i.e., the first is A, the second B, etc.) and
+% a title (if you include one).  So, if you need
+% hierarchical structure
+% \textit{within} an Appendix, start with \textbf{subsection} as the
+% highest level. Here is an outline of the body of this
+% document in Appendix-appropriate form:
+% \subsection{Introduction}
+% \subsection{The Body of the Paper}
+% \subsubsection{Type Changes and  Special Characters}
+% \subsubsection{Math Equations}
+% \paragraph{Inline (In-text) Equations}
+% \paragraph{Display Equations}
+% \subsubsection{Citations}
+% \subsubsection{Tables}
+% \subsubsection{Figures}
+% \subsubsection{Theorem-like Constructs}
+% \subsubsection*{A Caveat for the \TeX\ Expert}
+% \subsection{Conclusions}
+% \subsection{References}
+% Generated by bibtex from your \texttt{.bib} file.  Run latex,
+% then bibtex, then latex twice (to resolve references)
+% to create the \texttt{.bbl} file.  Insert that \texttt{.bbl}
+% file into the \texttt{.tex} source file and comment out
+% the command \texttt{{\char'134}thebibliography}.
+% % This next section command marks the start of
+% % Appendix B, and does not continue the present hierarchy
+% \section{More Help for the Hardy}
+
+% Of course, reading the source code is always useful.  The file
+% \path{acmart.pdf} contains both the user guide and the commented
+% code.
+
+% \begin{acks}
+%   The authors would like to thank Dr. Yuhua Li for providing the
+%   matlab code of  the \textit{BEPS} method.
+
+%   The authors would also like to thank the anonymous referees for
+%   their valuable comments and helpful suggestions. The work is
+%   supported by the \grantsponsor{GS501100001809}{National Natural
+%     Science Foundation of
+%     China}{http://dx.doi.org/10.13039/501100001809} under Grant
+%   No.:~\grantnum{GS501100001809}{61273304}
+%   and~\grantnum[http://www.nnsf.cn/youngscientsts]{GS501100001809}{Young
+%     Scientsts' Support Program}.
+
+% \end{acks}
