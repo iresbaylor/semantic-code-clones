@@ -1,0 +1,13 @@
+ts-contacts-service -> ts-admin-basic-info-service : 37.5
+ts-config-service -> ts-train-service : 16.666666666666664
+ts-config-service -> ts-admin-basic-info-service : 16.666666666666664
+ts-config-service -> ts-travel2-service : 33.33333333333333
+ts-config-service -> ts-travel-service : 33.33333333333333
+ts-order-other-service -> ts-order-service : 87.5
+ts-preserve-service -> ts-preserve-other-service : 50.0
+ts-security-service -> ts-train-service : 50.0
+ts-security-service -> ts-seat-service : 16.666666666666664
+ts-train-service -> ts-seat-service : 16.666666666666664
+ts-train-service -> ts-travel2-service : 16.666666666666664
+ts-train-service -> ts-travel-service : 16.666666666666664
+ts-travel2-service -> ts-travel-service : 66.66666666666666
