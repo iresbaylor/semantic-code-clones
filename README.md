@@ -16,19 +16,19 @@ Change directory in the console into the cloned project.
 Run on Linux:
 
 ```shell script
-./mvnw compile quarkus:dev -Dquarkus.args='/pat/to/app/under/test,/path/to/output' -Ddebug=true
+./mvnw compile quarkus:dev -Dquarkus.args='/path/to/app/under/test,/path/to/output' -Ddebug=true
 ```
 
 Run on Windows:
 
 ```shell script
-mvnw.cmd compile quarkus:dev -Dquarkus.args='/pat/to/app/under/test,/path/to/output' -Ddebug=true
+mvnw.cmd compile quarkus:dev -Dquarkus.args='/path/to/app/under/test,/path/to/output' -Ddebug=true
 ```
 
 Run on MacOS:
 
 ```shell script
-sh ./mvnw compile quarkus:dev -Dquarkus.args='/pat/to/app/under/test,/path/to/output' -Ddebug=true
+sh ./mvnw compile quarkus:dev -Dquarkus.args='/path/to/app/under/test,/path/to/output' -Ddebug=true
 ```
 
 There are 2 arguments specified in `-dDquarkus.args` separated by a comma. 
@@ -42,7 +42,7 @@ Note: do not set second path inside this project, it will not compile
 
 ## Results
 
-Results are stored under /results directory.
+Results are stored under /data directory.
 
 It contains:
 
